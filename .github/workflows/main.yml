@@ -16,9 +16,11 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
           cache: 'maven'
+      - id: get_version
+        uses: battila7/get-version-action@v2
       - name: Build with Maven
         run: |
-          mvn versions:set -DnewVersion=${{ github.ref }}
+          mvn versions:set -DnewVersion=${{ steps.get_version.outputs.version }}
           mvn clean package
       - name: Create Release
         id: create_release
@@ -27,7 +29,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          release_name: ${{ github.ref }}
           draft: false
           prerelease: false
       - uses: actions/upload-release-asset@v1.0.1
@@ -35,8 +37,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/sonar-github-plugin-${{ github.ref }}.jar
-          asset_name: sonar-github-plugin-${{ github.ref }}.jar
+          asset_path: ./target/sonar-github-plugin-${{ steps.get_version.outputs.version }}.jar
+          asset_name: sonar-github-plugin-${{ steps.get_version.outputs.version }}.jar
           asset_content_type: application/java-archive
       - uses: eregon/publish-release@v1
         env:
